@@ -6,6 +6,7 @@ import org.robolectric.internal.Implements;
 import javassist.*;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -48,7 +49,7 @@ public class AndroidTranslator implements Translator {
     }
 
     @Override
-    public void onLoad(ClassPool classPool, String className) throws NotFoundException, CannotCompileException {
+    public void onLoad(final ClassPool classPool, String className) throws NotFoundException, CannotCompileException {
         if (classCache.isWriting()) {
             throw new IllegalStateException("shouldn't be modifying bytecode after we've started writing cache! class=" + className);
         }
@@ -58,7 +59,7 @@ public class AndroidTranslator implements Translator {
             return;
         }
 
-        CtClass ctClass;
+        final CtClass ctClass;
         try {
             String translatedClassName = setup.translateClassName(className);
             ctClass = classPool.get(translatedClassName);
@@ -81,7 +82,7 @@ public class AndroidTranslator implements Translator {
             return;
         }
 
-        boolean shouldInstrument = setup.shouldInstrument(ctClass);
+        boolean shouldInstrument = setup.shouldInstrument(new JavassistClassDesc(ctClass));
 
         if (debug)
             System.out.println("Considering " + ctClass.getName() + ": " + (shouldInstrument ? "INSTRUMENTING" : "not instrumenting"));
@@ -145,6 +146,34 @@ public class AndroidTranslator implements Translator {
             }
         };
         ctClass.replaceClassName(map);
+    }
+
+    static class JavassistClassDesc implements ClassDesc {
+        private final CtClass ctClass;
+
+        public JavassistClassDesc(CtClass ctClass) {
+            this.ctClass = ctClass;
+        }
+
+        @Override
+        public boolean isInterface() {
+            return ctClass.isInterface();
+        }
+
+        @Override
+        public boolean isAnnotation() {
+            return ctClass.isAnnotation();
+        }
+
+        @Override
+        public boolean hasAnnotation(Class<? extends Annotation> annotationClass) {
+            return ctClass.hasAnnotation(annotationClass);
+        }
+
+        @Override
+        public String getName() {
+            return ctClass.getName();
+        }
     }
 
     class FromAndroidClassNameParts {

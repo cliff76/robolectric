@@ -1,8 +1,8 @@
 package org.robolectric.bytecode;
 
 import android.R;
+import android.net.Uri;
 import android.net.Uri__FromAndroid;
-import javassist.CtClass;
 import org.robolectric.AndroidManifest;
 import org.robolectric.RobolectricContext;
 import org.robolectric.annotation.DisableStrictI18n;
@@ -67,37 +67,31 @@ public class Setup {
 
 
     public boolean invokeApiMethodBodiesWhenShadowMethodIsMissing(Class clazz, String methodName, Class<?>[] paramClasses) {
+        if (clazz.getName().equals(Uri.class.getName())) return true;
+        if (clazz.getName().startsWith("android.support.v4")) return true;
+
         return !isFromAndroidSdk(clazz);
     }
 
-    public boolean shouldInstrument(CtClass ctClass) {
-        if (ctClass.isInterface() || ctClass.isAnnotation() || ctClass.hasAnnotation(DoNotInstrument.class)) {
+    public boolean shouldInstrument(ClassDesc classDesc) {
+        if (classDesc.isInterface() || classDesc.isAnnotation() || classDesc.hasAnnotation(DoNotInstrument.class)) {
             return false;
         }
 
-        if (isFromAndroidSdk(ctClass)) {
+        if (classDesc.getName().startsWith("android.support")) {
+            return false;
+        }
+
+        if (isFromAndroidSdk(classDesc)) {
             return true;
         }
 
         return false;
     }
 
-    public boolean shouldInstrument(Class clazz) {
-        if (clazz.isInterface() || clazz.isAnnotation() || clazz.getAnnotation(DoNotInstrument.class) != null) {
-            return false;
-        }
-
-        if (isFromAndroidSdk(clazz)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public boolean isFromAndroidSdk(CtClass ctClass) {
+  public boolean isFromAndroidSdk(ClassDesc classDesc) {
         // allow explicit control with @Instrument, mostly for tests
-        return ctClass.hasAnnotation(Instrument.class) || isFromAndroidSdk(ctClass.getName());
-
+        return classDesc.hasAnnotation(Instrument.class) || isFromAndroidSdk(classDesc.getName());
     }
 
     public boolean isFromAndroidSdk(Class clazz) {

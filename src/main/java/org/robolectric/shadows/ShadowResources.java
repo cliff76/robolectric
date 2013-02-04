@@ -20,7 +20,7 @@ import org.robolectric.res.ResourceExtractor;
 import org.robolectric.res.ResourceLoader;
 import org.robolectric.res.Attribute;
 import org.robolectric.res.ResName;
-import org.robolectric.tester.android.util.TestAttributeSet;
+import org.robolectric.res.RoboAttributeSet;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -282,7 +282,7 @@ public class ShadowResources {
         @Implementation
         public TypedArray obtainStyledAttributes(AttributeSet set, int[] attrs, int defStyleAttr, int defStyleRes) {
             if (set == null) {
-                set = new TestAttributeSet(new ArrayList<Attribute>(), shadowOf(resources).getResourceLoader(), null);
+                set = new RoboAttributeSet(new ArrayList<Attribute>(), shadowOf(resources).getResourceLoader(), null);
             }
 
             return ShadowTypedArray.create(resources, set, attrs);
